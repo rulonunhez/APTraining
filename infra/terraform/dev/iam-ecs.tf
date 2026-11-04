@@ -28,7 +28,10 @@ data "aws_iam_policy_document" "ecs_execution" {
       "logs:PutLogEvents",
     ]
 
-    resources = ["${aws_cloudwatch_log_group.backend.arn}:*"]
+    resources = [
+      "${aws_cloudwatch_log_group.backend.arn}:*",
+      "${aws_cloudwatch_log_group.db_bootstrap.arn}:*",
+    ]
   }
 
   statement {
@@ -38,6 +41,7 @@ data "aws_iam_policy_document" "ecs_execution" {
     resources = [
       aws_secretsmanager_secret.aptraining_app_db.arn,
       aws_secretsmanager_secret.aptraining_jwt.arn,
+      aws_db_instance.aptraining.master_user_secret[0].secret_arn,
     ]
   }
 }

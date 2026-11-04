@@ -28,6 +28,18 @@ variable "github_repository" {
   default     = "rulonunhez/APTraining"
 }
 
+variable "github_repository_owner_id" {
+  description = "Immutable GitHub owner ID used in the OIDC subject claim"
+  type        = string
+  default     = "79594316"
+}
+
+variable "github_repository_id" {
+  description = "Immutable GitHub repository ID used in the OIDC subject claim"
+  type        = string
+  default     = "1445630187"
+}
+
 variable "github_branch" {
   description = "Only this branch may assume the GitHub Actions role"
   type        = string

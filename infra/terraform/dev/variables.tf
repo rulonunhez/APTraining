@@ -30,9 +30,8 @@ variable "environment" {
 }
 
 variable "backend_image_tag" {
-  description = "ECR tag used by the APTraining dev backend task definition"
+  description = "Explicit ECR tag used by the APTraining dev backend task definition"
   type        = string
-  default     = "dev-20261022-02"
 }
 
 variable "enable_demo_api" {

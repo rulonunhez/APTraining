@@ -36,6 +36,42 @@ jobs:
           role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
 
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.16.5
+          terraform_wrapper: false
+
+      - name: Initialize application database login
+        working-directory: infra/terraform/dev
+        run: |
+          terraform init -input=false
+          task_definition=$(terraform output -raw db_bootstrap_task_definition_arn)
+          subnet_id=$(terraform output -json subnet_ids | jq -r '.app_a')
+          security_group_id=$(terraform output -raw app_security_group_id)
+          run_result=$(aws ecs run-task \
+            --cluster aptraining-dev \
+            --task-definition "$task_definition" \
+            --launch-type FARGATE \
+            --network-configuration "awsvpcConfiguration={subnets=[$subnet_id],securityGroups=[$security_group_id],assignPublicIp=DISABLED}" \
+            --output json)
+          task_arn=$(printf '%s' "$run_result" | jq -r '.tasks[0].taskArn // empty')
+          if [ -z "$task_arn" ]; then
+            printf '%s\n' "$run_result" | jq '.failures'
+            exit 1
+          fi
+          aws ecs wait tasks-stopped --cluster aptraining-dev --tasks "$task_arn"
+          exit_code=$(aws ecs describe-tasks \
+            --cluster aptraining-dev \
+            --tasks "$task_arn" \
+            --query 'tasks[0].containers[0].exitCode' \
+            --output text)
+          if [ "$exit_code" != "0" ]; then
+            echo "Database bootstrap task failed (exit code: $exit_code). See /ecs/aptraining-dev/db-bootstrap in CloudWatch Logs."
+            exit 1
+          fi
+          echo "Application database login is initialized."
+
       - name: Sign in to Amazon ECR
         id: ecr
         uses: aws-actions/amazon-ecr-login@v2
@@ -48,18 +84,11 @@ jobs:
           docker build --pull -t "$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" ./backend
           docker push "$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
 
-      - name: Set up Terraform
-        uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_version: 1.16.5
-          terraform_wrapper: false
-
       - name: Apply infrastructure and deploy this commit
         working-directory: infra/terraform/dev
         env:
           IMAGE_TAG: ${{ github.sha }}-${{ github.run_attempt }}
         run: |
-          terraform init -input=false
           terraform apply -input=false -auto-approve \
             -var='aws_profile=' \
             -var="backend_image_tag=$IMAGE_TAG" \

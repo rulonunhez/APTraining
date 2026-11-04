@@ -1,6 +1,6 @@
 # Automated APTraining dev deployment
 
-A push to `DEV_AWS` that changes `backend/` or this workflow builds the backend image, pushes it to ECR using the commit SHA and GitHub run attempt as its immutable tag, and runs Terraform with `enable_demo_api=true`. The ECS demo service and its public API endpoint will therefore be active after deployment. Terraform infrastructure changes themselves should be planned and applied locally with the SSO profile.
+A push to `DEV_AWS` that changes `backend/` or this workflow first runs a one-off Fargate task inside the VPC to create or synchronize the PostgreSQL application login from Secrets Manager. It then builds the backend image, pushes it to ECR using the commit SHA and GitHub run attempt as its immutable tag, and runs Terraform with `enable_demo_api=true`. The ECS demo service and its public API endpoint will therefore be active after deployment. Terraform infrastructure changes themselves should be planned and applied locally with the SSO profile.
 
 The Terraform files used by CI live in this repository at `infra/terraform/dev`. From the repository root, use the scripts below to deploy the latest image already pushed to ECR or stop the demo API:
 
@@ -19,8 +19,9 @@ The next qualifying push to `DEV_AWS` turns the demo back on because the GitHub 
 
 ## One-time setup still required
 
-1. Apply the state-bucket bootstrap in `infra/terraform/state-bootstrap`, then initialize the dev and GitHub Actions stacks. Apply the GitHub Actions role stack after reviewing its plan. It reuses the account's existing GitHub OIDC provider and creates a role trusted only for `rulonunhez/APTraining` on `DEV_AWS`.
+1. Apply the state-bucket bootstrap in `infra/terraform/state-bootstrap`, then initialize the dev and GitHub Actions stacks. Apply the dev stack locally once to create the base infrastructure and the database bootstrap task definition. Apply the GitHub Actions role stack after reviewing its plan. It reuses the account's existing GitHub OIDC provider and creates a role trusted only for `rulonunhez/APTraining` on `DEV_AWS`.
 2. Add the resulting role ARN as the GitHub Actions repository variable `AWS_DEPLOY_ROLE_ARN`.
+3. Push or manually run the workflow on `DEV_AWS`. It runs the database bootstrap task before publishing and deploying the backend. The task reads master and application passwords from Secrets Manager and writes logs to `/ecs/aptraining-dev/db-bootstrap`; it does not print credentials.
 
 Protect `DEV_AWS` so only trusted contributors can push to it: each push that runs this workflow can publish a backend image and apply infrastructure changes in the AWS account.
 

@@ -21,7 +21,11 @@ data "aws_iam_policy_document" "github_actions_assume_role" {
     condition {
       test     = "StringEquals"
       variable = "token.actions.githubusercontent.com:sub"
-      values   = ["repo:${var.github_repository}:ref:refs/heads/${var.github_branch}"]
+      # GitHub uses immutable owner/repository IDs in the default `sub` claim
+      # for repositories created after 2026-07-15.
+      values = [
+        "repo:${split("/", var.github_repository)[0]}@${var.github_repository_owner_id}/${split("/", var.github_repository)[1]}@${var.github_repository_id}:ref:refs/heads/${var.github_branch}"
+      ]
     }
   }
 }
@@ -326,6 +330,19 @@ data "aws_iam_policy_document" "github_actions_deploy" {
       "ecs:RegisterTaskDefinition",
     ]
     resources = ["arn:aws:ecs:${var.aws_region}:${var.aws_account_id}:task-definition/${var.project_name}-${var.environment}-backend*"]
+  }
+
+  statement {
+    sid       = "RunAPTrainingDatabaseBootstrapTask"
+    effect    = "Allow"
+    actions   = ["ecs:RunTask"]
+    resources = ["arn:aws:ecs:${var.aws_region}:${var.aws_account_id}:task-definition/${var.project_name}-${var.environment}-db-bootstrap*"]
+
+    condition {
+      test     = "ArnEquals"
+      variable = "ecs:cluster"
+      values   = ["arn:aws:ecs:${var.aws_region}:${var.aws_account_id}:cluster/${var.project_name}-${var.environment}"]
+    }
   }
 
   statement {
