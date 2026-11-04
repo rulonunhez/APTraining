@@ -2,7 +2,7 @@
 
 This stack creates the dedicated GitHub Actions deployment role. It uses the APTraining state bucket and a separate state key from the dev stack.
 
-The trust policy accepts only the `rulonunhez/APTraining` repository on branch `main`. The inline policy is limited to the Terraform state and lock file, the APTraining dev ECR image, reading the current dev stack, and creating/updating the optional demo API and ECS deployment. It does not grant permission to delete the Terraform state, VPC, RDS database, or media bucket, or to modify existing IAM roles. The stack reads the account's existing GitHub OIDC provider instead of attempting to create a duplicate provider.
+The trust policy accepts only the `rulonunhez/APTraining` repository on branch `DEV_AWS`. The inline policy is limited to the Terraform state and lock file, the APTraining dev ECR image, reading the current dev stack, and creating/updating the optional demo API and ECS deployment. It does not grant permission to delete the Terraform state, VPC, RDS database, or media bucket, or to modify existing IAM roles. The stack reads the account's existing GitHub OIDC provider instead of attempting to create a duplicate provider.
 
 When the old GymApp bootstrap stack is retired, remove its OIDC provider from the old Terraform state without deleting the AWS provider itself. APTraining's deployment role uses that account-wide provider.
 

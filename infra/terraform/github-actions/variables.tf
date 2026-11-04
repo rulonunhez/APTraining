@@ -31,7 +31,7 @@ variable "github_repository" {
 variable "github_branch" {
   description = "Only this branch may assume the GitHub Actions role"
   type        = string
-  default     = "main"
+  default     = "DEV_AWS"
 }
 
 variable "aws_account_id" {

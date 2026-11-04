@@ -28,7 +28,7 @@ data "aws_iam_policy_document" "github_actions_assume_role" {
 
 resource "aws_iam_role" "github_actions_deploy" {
   name                 = "${var.project_name}-${var.environment}-github-actions-deploy"
-  description          = "Build and deploy APTraining dev from the protected main branch"
+  description          = "Build and deploy APTraining dev from the protected DEV_AWS branch"
   assume_role_policy   = data.aws_iam_policy_document.github_actions_assume_role.json
   max_session_duration = 3600
 
