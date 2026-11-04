@@ -1,28 +1,43 @@
 # GitHub Actions OIDC deployment role
 
-This stack creates the dedicated GitHub Actions deployment role. It uses the APTraining state bucket and a separate state key from the dev stack.
+This stack creates the dedicated IAM role used by the APTraining deployment workflow. It uses the APTraining state bucket and a state key separate from the dev stack.
 
-The trust policy accepts only the `rulonunhez/APTraining` repository on branch `DEV_AWS`. The inline policy is limited to the Terraform state and lock file, the APTraining dev ECR image, reading the current dev stack, and creating/updating the optional demo API and ECS deployment. It does not grant permission to delete the Terraform state, VPC, RDS database, or media bucket, or to modify existing IAM roles. The stack reads the account's existing GitHub OIDC provider instead of attempting to create a duplicate provider.
+The trust policy accepts only repository `rulonunhez/APTraining` on branch `DEV_AWS`. The stack reads the account's existing GitHub OIDC provider; it does not create a second provider. Its inline policy is scoped to the Terraform state and lock file, the APTraining dev ECR image, reading the current dev stack, and creating or updating the optional demo API and ECS deployment. It does not grant permission to delete the Terraform state, VPC, RDS database, or media bucket, or to modify existing IAM roles.
 
-When the old GymApp bootstrap stack is retired, remove its OIDC provider from the old Terraform state without deleting the AWS provider itself. APTraining's deployment role uses that account-wide provider.
+## Provision the role from PowerShell
 
-## Apply from PowerShell
-
-Review the plan before applying it:
+Sign in with the APTraining SSO profile, initialize the stack, and inspect the plan:
 
 ```powershell
+aws sso login --profile aptraining-dev
 $env:AWS_PROFILE = 'aptraining-dev'
 terraform -chdir='C:\ProyectoGymApp\APTraining\infra\terraform\github-actions' init
 terraform -chdir='C:\ProyectoGymApp\APTraining\infra\terraform\github-actions' plan
 ```
 
-The expected plan creates an IAM OIDC provider, one deploy role, and its inline policy. If the provider already exists, stop and import it or adapt the stack to reference its ARN; do not try to create a duplicate. After reviewing the plan, apply it and retrieve the role ARN:
+The plan should create the APTraining GitHub Actions IAM role and its inline policy. It should read the already existing GitHub OIDC provider as a data source. Confirm that it does not propose creating an OIDC provider or changing unrelated resources before applying:
 
 ```powershell
 terraform -chdir='C:\ProyectoGymApp\APTraining\infra\terraform\github-actions' apply
 terraform -chdir='C:\ProyectoGymApp\APTraining\infra\terraform\github-actions' output -raw github_actions_deploy_role_arn
 ```
 
-Add the output in the GitHub repository at **Settings → Secrets and variables → Actions → Variables** with the name `AWS_DEPLOY_ROLE_ARN`. It is an ARN, not a secret credential.
+Copy the resulting ARN. In GitHub, open **rulonunhez/APTraining → Settings → Secrets and variables → Actions → Variables → New repository variable** and create:
 
-This role is intended for the existing deployment workflow, which always applies the stack with `enable_demo_api=true`. Apply unrelated foundational infrastructure changes locally using the SSO profile.
+- Name: `AWS_DEPLOY_ROLE_ARN`
+- Value: the ARN printed by Terraform
+
+This ARN identifies the role and is not a credential. GitHub Actions exchanges its OIDC token for temporary AWS credentials.
+
+## Deploy from `DEV_AWS`
+
+The workflow runs on pushes to `DEV_AWS` that change `backend/**` or the workflow file. Once the repository variable is saved, push the backend change from the local `DEV_AWS` branch:
+
+```powershell
+git switch DEV_AWS
+git push -u origin DEV_AWS
+```
+
+The workflow builds and pushes the backend image, then applies the dev stack with `enable_demo_api=true`. This creates the demo API and ECS service and can add AWS charges. The deployment role trust policy does not allow `main` to assume the role. The workflow can also be manually started with **Actions → Deploy APTraining dev backend → Run workflow**, selecting `DEV_AWS`.
+
+When retiring GymApp, retain the account-wide GitHub OIDC provider. Remove it from GymApp's old Terraform state before destroying the old bootstrap stack so Terraform does not delete the provider used by APTraining.

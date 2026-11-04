@@ -14,5 +14,3 @@ public class ApTrainingBackendApplication {
 	}
 
 }
-
-// Comentario para auto-deploy
