@@ -1,0 +1,1 @@
+ALTER TABLE videos ADD COLUMN S3_url TEXT;

@@ -1,0 +1,5 @@
+ALTER TABLE videos
+    ADD COLUMN youtube_url TEXT;
+
+ALTER TABLE videos
+    ALTER COLUMN s3_key DROP NOT NULL;

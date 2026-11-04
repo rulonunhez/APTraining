@@ -1,0 +1,40 @@
+# ==== JAVA ====
+/backend/target/
+/backend/logs/
+*.log
+*.class
+target/
+
+# ==== SPRING ====
+.env
+.env.*
+!.env.example
+
+# ==== FLUTTER ====
+/mobile/build/
+/mobile/.dart_tool/
+/mobile/.idea/
+/mobile/.packages
+/mobile/pubspec.lock
+
+# ==== IDEs ====
+.idea/
+.vscode/
+*.iml
+*.iws
+*.ipr
+
+# ==== OS ====
+.DS_Store
+Thumbs.db
+
+# Docker
+docker-compose.override.yml
+
+# Terraform
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+*.tfplan
+crash.log
+crash.*.log
