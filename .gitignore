@@ -16,6 +16,7 @@ target/
 /mobile/.idea/
 /mobile/.packages
 /mobile/pubspec.lock
+/mobile/.flutter-plugins-dependencies
 
 # ==== IDEs ====
 .idea/
