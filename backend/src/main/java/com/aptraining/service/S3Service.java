@@ -59,6 +59,10 @@ public class S3Service {
         return "exercises/" + userId + "/";
     }
 
+    public static String userAvatarKeyPrefix(UUID userId) {
+        return "avatars/" + userId + "/";
+    }
+
     public String generateUploadUrl(String key, String contentType, long contentLength) {
         PutObjectRequest putObjectRequest = PutObjectRequest.builder()
                 .bucket(awsProperties.getBucket())
@@ -110,6 +114,10 @@ public class S3Service {
     }
 
     public String generatePresignedUrl(String key) {
+        return generatePresignedUrl(key, Duration.ofMinutes(5)); // URL expira en 5 min
+    }
+
+    public String generatePresignedUrl(String key, Duration duration) {
         GetObjectRequest getObjectRequest = GetObjectRequest.builder()
                 .bucket(awsProperties.getBucket())
                 .key(key)
@@ -117,7 +125,7 @@ public class S3Service {
 
         GetObjectPresignRequest presignRequest =
                 GetObjectPresignRequest.builder()
-                        .signatureDuration(Duration.ofMinutes(5)) // URL expira en 5 min
+                        .signatureDuration(duration)
                         .getObjectRequest(getObjectRequest)
                         .build();
 

@@ -1,6 +1,9 @@
+import 'dart:io';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ap_training/features/auth/providers/auth_provider.dart';
 
+import '../data/profile_image_processor.dart';
 import '../data/user_remote_data_source.dart';
 import '../models/app_user.dart';
 import '../repositories/user_repository.dart';
@@ -10,7 +13,10 @@ final userRemoteDataSourceProvider = Provider<UserRemoteDataSource>(
 );
 
 final userRepositoryProvider = Provider<UserRepository>(
-  (ref) => RemoteUserRepository(ref.watch(userRemoteDataSourceProvider)),
+  (ref) => RemoteUserRepository(
+    ref.watch(userRemoteDataSourceProvider),
+    ref.watch(apiClientProvider),
+  ),
 );
 
 /// Usuario autenticado con su rol. Se recarga al iniciar sesión y se
@@ -41,6 +47,20 @@ class CurrentUserNotifier extends AsyncNotifier<AppUser?> {
     state = await AsyncValue.guard(
       () => ref.read(userRepositoryProvider).getMe(),
     );
+  }
+
+  Future<void> changeProfileImage(File image) async {
+    final updated = await ref
+        .read(userRepositoryProvider)
+        .updateProfileImage(image, ProfileImageProcessor.outputContentType);
+    state = AsyncData(updated);
+    ref.read(usersProvider.notifier).replaceUser(updated);
+  }
+
+  Future<void> removeProfileImage() async {
+    final updated = await ref.read(userRepositoryProvider).deleteProfileImage();
+    state = AsyncData(updated);
+    ref.read(usersProvider.notifier).replaceUser(updated);
   }
 }
 
@@ -80,11 +100,15 @@ class UsersNotifier extends AsyncNotifier<List<AppUser>> {
   Future<AppUser> updateRole(String userId, UserRole role) async {
     final updated =
         await ref.read(userRepositoryProvider).updateRole(userId, role);
+    replaceUser(updated);
+    return updated;
+  }
+
+  void replaceUser(AppUser updated) {
     state = state.whenData(
       (users) => [
-        for (final user in users) user.id == userId ? updated : user,
+        for (final user in users) user.id == updated.id ? updated : user,
       ],
     );
-    return updated;
   }
 }

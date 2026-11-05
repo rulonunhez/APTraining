@@ -35,6 +35,8 @@ public class User implements UserDetails {
     @Column(length = 10)
     private Role role;
 
+    private String profileImageKey;
+
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
     private List<Exercise> exercises = new ArrayList<>();

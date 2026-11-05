@@ -25,12 +25,14 @@ class AppUser {
     required this.username,
     required this.email,
     required this.role,
+    this.profileImageUrl,
   });
 
   final String id;
   final String username;
   final String email;
   final UserRole role;
+  final String? profileImageUrl;
 
   bool get isAdmin => role == UserRole.admin;
   bool get isTrainer => role == UserRole.trainer;
@@ -41,5 +43,6 @@ class AppUser {
         username: json['username'] as String,
         email: json['email'] as String,
         role: UserRole.fromApiValue(json['role'] as String?),
+        profileImageUrl: json['profileImageUrl'] as String?,
       );
 }

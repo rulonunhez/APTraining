@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../models/app_user.dart';
+import 'user_avatar.dart';
 
-/// Tarjeta de usuario con el espacio reservado a la izquierda para la
-/// futura foto de perfil.
+/// Tarjeta de usuario con su foto de perfil a la izquierda.
 class UserTile extends StatelessWidget {
   const UserTile({
     super.key,
@@ -21,18 +21,13 @@ class UserTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colors = theme.colorScheme;
 
     return Card(
       margin: EdgeInsets.zero,
       child: ListTile(
         onTap: onTap,
         contentPadding: const EdgeInsets.fromLTRB(12, 6, 12, 6),
-        leading: CircleAvatar(
-          radius: 22,
-          backgroundColor: colors.surfaceContainerHighest,
-          child: Icon(Icons.person_outline, color: colors.onSurfaceVariant),
-        ),
+        leading: UserAvatar(user: user),
         title: Text(
           user.username,
           maxLines: 1,

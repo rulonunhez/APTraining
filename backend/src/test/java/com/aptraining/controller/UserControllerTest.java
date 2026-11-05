@@ -21,16 +21,16 @@ class UserControllerTest {
         Authentication authentication = mock(Authentication.class);
         when(authentication.getName()).thenReturn(email);
         User user = mock(User.class);
-        when(user.getId()).thenReturn(userId);
-        when(user.getUsername()).thenReturn("ana-gym");
-        when(user.getEmail()).thenReturn(email);
         UserService userService = mock(UserService.class);
         when(userService.findByEmail(email)).thenReturn(user);
+        UserDTO dto = new UserDTO(userId, "ana-gym", email, null, "https://example.com/avatar.png");
+        when(userService.toDTO(user)).thenReturn(dto);
 
         UserDTO result = new UserController(userService).getCurrentUser(authentication);
 
         assertEquals(userId, result.getId());
         assertEquals("ana-gym", result.getUsername());
         assertEquals(email, result.getEmail());
+        assertEquals("https://example.com/avatar.png", result.getProfileImageUrl());
     }
 }

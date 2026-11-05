@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/widgets/app_loader.dart';
 import '../../users/providers/users_providers.dart';
 import '../widgets/auth_logout_button.dart';
+import '../widgets/profile_avatar_editor.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -40,6 +41,8 @@ class ProfileScreen extends ConsumerWidget {
               return Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  ProfileAvatarEditor(user: user),
+                  const SizedBox(height: 16),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 24),
                     child: Text(

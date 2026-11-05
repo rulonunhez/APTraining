@@ -1,7 +1,10 @@
 package com.aptraining.controller;
 
+import com.aptraining.dto.ProfileImageUploadUrlDTO;
 import com.aptraining.dto.UserDTO;
 import com.aptraining.entity.User;
+import com.aptraining.requests.ProfileImageUploadUrlRequest;
+import com.aptraining.requests.UpdateProfileImageRequest;
 import com.aptraining.requests.UpdateUserRoleRequest;
 import com.aptraining.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -28,7 +31,28 @@ public class UserController {
     @GetMapping("/me")
     public UserDTO getCurrentUser(Authentication authentication) {
         User user = userService.findByEmail(authentication.getName());
-        return new UserDTO(user.getId(), user.getUsername(), user.getEmail(), user.getRole());
+        return userService.toDTO(user);
+    }
+
+    @PostMapping("/me/profile-image-upload-url")
+    public ProfileImageUploadUrlDTO createProfileImageUploadUrl(
+            @RequestBody ProfileImageUploadUrlRequest request,
+            Authentication authentication
+    ) {
+        return userService.createProfileImageUploadUrl(request, authentication.getName());
+    }
+
+    @PatchMapping("/me/profile-image")
+    public UserDTO updateProfileImage(
+            @RequestBody UpdateProfileImageRequest request,
+            Authentication authentication
+    ) {
+        return userService.updateProfileImage(request.getKey(), authentication.getName());
+    }
+
+    @DeleteMapping("/me/profile-image")
+    public UserDTO deleteProfileImage(Authentication authentication) {
+        return userService.deleteProfileImage(authentication.getName());
     }
 
     @PatchMapping("/{id}/role")
