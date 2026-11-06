@@ -1,0 +1,25 @@
+workflows:
+  ios-sin-firmar:
+    name: iOS sin firmar
+    instance_type: mac_mini_m2
+    max_build_duration: 30
+    working_directory: mobile
+    environment:
+      flutter: stable
+      xcode: latest
+      cocoapods: default
+      vars:
+        # URL actual de la API DEV: terraform -chdir=infra/terraform/dev output -raw demo_api_url
+        API_BASE_URL: https://bdpbnzllu1.execute-api.eu-north-1.amazonaws.com
+    scripts:
+      - name: Instalar dependencias
+        script: flutter pub get
+      - name: Compilar iOS sin firmar
+        script: flutter build ios --release --no-codesign --dart-define=API_BASE_URL=$API_BASE_URL
+      - name: Crear el IPA
+        script: |
+          mkdir Payload
+          cp -R build/ios/iphoneos/Runner.app Payload/
+          zip -r -y app.ipa Payload
+    artifacts:
+      - mobile/app.ipa
